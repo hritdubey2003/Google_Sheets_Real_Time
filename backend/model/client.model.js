@@ -19,15 +19,20 @@ const clientSchema = new mongoose.Schema({
     }
 } , { timestamps: true });
 
-clientSchema.method.generateAuthToken = function () {
-    const token = jwt.sign({ _id: this._id }, process.env.JWT_SECRET);
+clientSchema.methods.generateAuthToken = function () {
+    const token = jwt.sign({ _id: this._id.toString() }, process.env.JWT_SECRET);
     return token;
 };
 
-clientSchema.static.hashPassword = async function ( password ) {
-    const hashedpassword = await bcrypt.hash(password, 10);
+clientSchema.statics.hashPassword = async function ( password ) {
+    const salt = await bcrypt.genSalt(10);
+    const hashedpassword = await bcrypt.hash(password, salt);
     return hashedpassword;
 };
+
+clientSchema.methods.matchPassword = async function ( password ) {
+    return await bcrypt.compare( password, this.password );
+}
 
 const Client = mongoose.model('Client', clientSchema);
 
